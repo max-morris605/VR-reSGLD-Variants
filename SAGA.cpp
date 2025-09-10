@@ -32,13 +32,19 @@ double energy(double* x, double beta)
 
 double energy_derivative_scalar(double* x, double beta) 
 {
-     double d1 = *x - beta;
-     double d2 = *x - 20.0 + beta;
-     double a  = std::exp(-(d1 * d1) / 50.0);
-     double b  = std::exp(-(d2 * d2) / 50.0);
-     double num = d2 * b - d1 * a;
-     double denom = a + b;
-     return (num / 25.0) / denom;
+     double d1 = *x - beta ;
+
+     double d2 = *x - 20.0 + beta ;
+
+     double a  = std::exp(-(d1 * d1) / 50.0) ;
+
+     double b  = std::exp(-(d2 * d2) / 50.0) ;
+
+     double num = d2 * b - d1 * a ;
+
+     double denom = a + b ;
+
+     return (num / 25.0) / denom ; 
 }
 
 
@@ -51,7 +57,7 @@ double swap_rate(double sum1, double sum2, double temp1, double temp2,
 
     double bias_term  = (temp_diff) * (sigma_var / F) ; 
 
-    double exponent = temp_diff * (energy_diff - bias_term);
+    double exponent = temp_diff * (energy_diff - bias_term) ;
 
     // min(S,1) 
 
@@ -69,11 +75,11 @@ int main() {
 
     auto start = clock::now() ;
 
-    std::mt19937_64 rng(std::random_device{}());
+    std::mt19937_64 rng(std::random_device{}()) ;
 
-    std::uniform_real_distribution<double> uniform01(0.0, 1.0);
+    std::uniform_real_distribution<double> uniform01(0.0, 1.0) ;
 
-    std::normal_distribution<double> normal01(0.0, 1.0);
+    std::normal_distribution<double> normal01(0.0, 1.0) ;
 
 
     const int N = 1000 ; 
@@ -82,7 +88,7 @@ int main() {
          
     const int k_max  = 100000 ;  
            
-    const double eta = 0.02 ;           
+    const double eta = 0.002 ;           
 
     const double temp1 = 25.0 ;
 
@@ -170,9 +176,9 @@ int main() {
     
     
     
-    std::vector<int> idx(n), saga_idx(SAGA_sample_size);             
+    std::vector<int> idx(n), saga_idx(SAGA_sample_size) ;             
 
- 	std::uniform_int_distribution<int> uid(0, N - 1);
+ 	std::uniform_int_distribution<int> uid(0, N - 1) ;
 
     int swaps = 0 ;
 
@@ -181,11 +187,10 @@ int main() {
 
     for (int k = 1; k < k_max; ++k) 
     {
-        indice_sampler(indices, rng);
+        indice_sampler(indices, rng) ;
 
- 	    std::copy_n(indices.begin(), n, idx.begin());
+ 	    std::copy_n(indices.begin(), n, idx.begin()) ;
 
-        // --- gradients (already fixed) ---
         grad1 = 0.0 ;
 
         grad2 = 0.0 ;
@@ -206,7 +211,7 @@ int main() {
 
         beta2 += -eta * (double(N)/n) * grad2 + noise2 * xi2 ;
 
-        // --- compute SAGA deltas using the *old* storage snapshot ---
+        // compute SAGA deltas using the *old* storage snapshot ---
         double curr_sum1 = 0.0 ;
     
         double curr_sum2 = 0.0 ;
@@ -231,52 +236,57 @@ int main() {
             curr_sum2 += SAGA_deltas2(j) ;
         }
 
-        // --- form energy sums (still with old means!) ---
+        // form energy sums (still with old means) 
         energy_sum1 = N * (curr_sum1 / SAGA_sample_size + SAGA_mean1) ;
 
-        energy_sum2 = N * (curr_sum2 / SAGA_sample_size + SAGA_mean2) ;
-
-        // --- update variance from Δ ---
-        
-        
-        
-        
+        energy_sum2 = N * (curr_sum2 / SAGA_sample_size + SAGA_mean2) ; 
     
-        // --- 2) VARIANCE-ONLY batches (fast: sample with replacement, no shuffles, no Eigen allocs) ---
-        const int K = 10;  // you can start with 10–20, then reduce to 5 later
-        std::uniform_int_distribution<int> uid(0, N - 1);
+        // VARIANCE-ONLY batches 
+        const int K = 10 ;  // you can start with 10–20
 
-        double dsum = 0.0, d2sum = 0.0;
+        std::uniform_int_distribution<int> uid(0, N - 1) ;
 
-        for (int krep = 0; krep < K; ++krep) {
-            double s1 = 0.0, s2 = 0.0;
+        double dsum = 0.0, d2sum = 0.0 ;
+
+        for (int krep = 0; krep < K; ++krep)
+         {
+            double s1 = 0.0, s2 = 0.0 ;
+
             // sample-with-replacement minibatches of size n for each chain
-            for (int j = 0; j < n; ++j) {
-                const int id = uid(rng);
 
-                const double e1 = energy(&train_data(id), beta1);
-                const double e2 = energy(&train_data(id), beta2);
+            for (int j = 0; j < n; ++j) 
+            {
+                const int id = uid(rng) ;
 
-                s1 += (e1 - stored_SAGA_energies1(id));
-                s2 += (e2 - stored_SAGA_energies2(id));
+                const double e1 = energy(&train_data(id), beta1) ;
+
+                const double e2 = energy(&train_data(id), beta2) ;
+
+                s1 += (e1 - stored_SAGA_energies1(id)) ;
+
+                s2 += (e2 - stored_SAGA_energies2(id)) ;
             }
-            const double L1 = N * (s1 / n + SAGA_mean1);
-            const double L2 = N * (s2 / n + SAGA_mean2);
-            const double d  = L1 - L2;
 
-            dsum  += d;
-            d2sum += d * d;
+            const double L1 = N * (s1 / n + SAGA_mean1) ;
+
+            const double L2 = N * (s2 / n + SAGA_mean2) ;
+
+            const double d  = L1 - L2 ;
+
+            dsum  += d ;
+
+            d2sum += d * d ;
         }
 
-        const double dbar     = dsum / K;
-        const double var_step = (K > 1) ? (d2sum - K * dbar * dbar) / (K - 1) : 0.0;
+        const double dbar = dsum / K ;
 
-        // EMA for variance (keep it gentle; you set 0.2 which is quite high)
-        sigma_hat = (1 - smooth_factor) * sigma_hat + smooth_factor * std::max(0.0, var_step);
-    
+        const double var_step = (K > 1) ? (d2sum - K * dbar * dbar) / (K - 1) : 0.0 ;
 
-        
-        // --- NOW update SAGA storage and means (apply deltas once) ---
+        // EMA for variance 
+        sigma_hat = (1 - smooth_factor) * sigma_hat + smooth_factor * std::max(0.0, var_step) ;
+
+        // update SAGA storage and means
+
         double delta_mean1 = 0.0 ;
 
         double delta_mean2 = 0.0 ;
@@ -296,7 +306,6 @@ int main() {
 
         SAGA_mean2 += delta_mean2 / double(N) ;
 
-        // --- swap decision (storage now remains attached to temperatures) ---
         double S = swap_rate(energy_sum1, energy_sum2, temp1, temp2, N, n, sigma_hat, correct_factor) ;
 
         swap_rate_lst(k-1) = S ;
@@ -314,7 +323,7 @@ int main() {
 
     }
 
-    auto end = clock::now();
+    auto end = clock::now() ;
 
     std::ofstream(myfile) ;
 
@@ -337,7 +346,6 @@ int main() {
     std::chrono::duration<double> elapsed = end - start ; 
 
     std::cout << "Elapsed: " << elapsed.count() << " s\n" ;
-
 
     return 0 ;
 
